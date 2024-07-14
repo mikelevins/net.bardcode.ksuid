@@ -79,11 +79,55 @@
 #+nil (defparameter $k (make-ksuid))
 #+nil (ksuid->integer $k)
 #+nil (integer->ksuid (ksuid->integer $k))
-#+ (equalp $k (integer->ksuid (ksuid->integer $k)))
+#+nil (equalp $k (integer->ksuid (ksuid->integer $k)))
 
 
 (defun ksuid->string (ksuid)
-  ())
+  (assert (typep ksuid 'ksuid)() "Not a ksuid: ~S" ksuid)
+  (let* ((num (ksuid->integer ksuid))
+         (base62 ""))
+    (loop for i = num
+          while (> num 0)
+          do (multiple-value-bind (q rem)(truncate num 62)
+               (setf base62 (concatenate 'string
+                                         (string (elt +base62-alphabet+ rem))
+                                         base62)
+                     num q)))
+    base62))
+
+#+nil (defparameter $k (make-ksuid))
+#+nil (length (ksuid->string $k))
+
+(defmethod valid-ksuid-string-p (thing) nil)
+(defmethod valid-ksuid-string-p ((thing string))
+  (and (<= (length thing) 27)
+       (every (lambda (ch1)(find-if (lambda (ch2)(char= ch1 ch2)) +base62-alphabet+))
+              thing)))
+
+#+nil (defparameter $k (make-ksuid))
+#+nil (time (valid-ksuid-string-p +base62-alphabet+))
+#+nil (valid-ksuid-string-p "+-()")
+#+nil (loop for i from 0 below 1000
+            do (if (valid-ksuid-string-p (ksuid->string (make-ksuid)))
+                   (format t ".")
+                   (break)))
+
+(defmethod base-62-digit-value ((ch character))
+  (position ch +base62-alphabet+ :test 'char=))
+
+#+nil (time (base-62-digit-value #\W))
 
 (defun string->ksuid (str)
-  ())
+  (assert (valid-ksuid-string-p str)() "Not a valid ksuid string: ~S" str)
+  (let* ((len (length str))
+         (place-expts (reverse (loop for i from 0 below len collect i)))
+         (digit-values (loop for i from 0 below len collect (base-62-digit-value (elt str i))))
+         (ksuid-int (loop for i from 0 below len
+                          summing (* (elt digit-values i)
+                                     (expt 62 (elt place-expts i))))))
+    (integer->ksuid ksuid-int)))
+
+#+nil (defparameter $k1 (make-ksuid))
+#+nil (setf $kstr (ksuid->string $k1))
+#+nil (setf $k2 (string->ksuid $kstr))
+#+nil (equalp $k1 $k2)
