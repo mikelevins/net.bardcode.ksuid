@@ -47,16 +47,16 @@
 #+nil (get-ksuid-timestamp-bytes)
 
 (defun get-ksuid-random-bytes (&optional (prng ironclad:*prng*))
-  (cl-intbytes:int->octets (ironclad:strong-random +128-set-bits+ prng)
-                           16))
+  (reverse (cl-intbytes:int->octets (ironclad:strong-random +128-set-bits+ prng)
+                                    16)))
 
 #+nil (type-of (get-ksuid-random-bytes))
 
 (deftype ksuid ()
-  '(simple-array (unsigned-byte 8) (20)))
+  '(array t (20)))
 
 (defun make-ksuid ()
-  (concatenate '(SIMPLE-ARRAY (UNSIGNED-BYTE 8) (20))
+  (concatenate '(ARRAY t (20))
                (get-ksuid-timestamp-bytes)
                (get-ksuid-random-bytes)))
 
@@ -68,12 +68,13 @@
 ;;; ---------------------------------------------------------------------
 
 (defun ksuid->integer (ksuid)
-  (cl-intbytes:octets->uint ksuid 20))
+  (cl-intbytes:octets->int (reverse ksuid) 20))
 
 #+nil (ksuid->integer (make-ksuid))
+#+nil 
 
 (defun integer->ksuid (int)
-  (cl-intbytes:int->octets int 20))
+  (reverse (cl-intbytes:int->octets int 20)))
 
 #+nil (integer->ksuid 0)
 #+nil (defparameter $k (make-ksuid))
@@ -95,8 +96,10 @@
                      num q)))
     base62))
 
-#+nil (defparameter $k (make-ksuid))
-#+nil (length (ksuid->string $k))
+#+nil (defparameter $k1 (make-ksuid))
+#+nil (defparameter $k2 (make-ksuid))
+#+nil (ksuid->string $k1)
+#+nil (ksuid->string $k2)
 
 (defmethod valid-ksuid-string-p (thing) nil)
 (defmethod valid-ksuid-string-p ((thing string))
@@ -104,30 +107,33 @@
        (every (lambda (ch1)(find-if (lambda (ch2)(char= ch1 ch2)) +base62-alphabet+))
               thing)))
 
-#+nil (defparameter $k (make-ksuid))
-#+nil (time (valid-ksuid-string-p +base62-alphabet+))
-#+nil (valid-ksuid-string-p "+-()")
-#+nil (loop for i from 0 below 1000
-            do (if (valid-ksuid-string-p (ksuid->string (make-ksuid)))
-                   (format t ".")
-                   (break)))
-
 (defmethod base-62-digit-value ((ch character))
   (position ch +base62-alphabet+ :test 'char=))
 
 #+nil (time (base-62-digit-value #\W))
+#+nil (loop for ch across +base62-alphabet+ collect (base-62-digit-value ch))
+
+(defun string->ksuid-int (str)
+  (assert (valid-ksuid-string-p str)() "Not a valid ksuid string: ~S" str)
+  (let* ((digits (reverse str))
+         (len (length digits))
+         (int-value 0))
+    (loop for i from 0 below len
+          do (let* ((digit (elt digits i))
+                    (digit-val (base-62-digit-value digit))
+                    (place-value (* digit-val (expt 62 i))))
+               (incf int-value place-value)))
+    int-value))
 
 (defun string->ksuid (str)
   (assert (valid-ksuid-string-p str)() "Not a valid ksuid string: ~S" str)
-  (let* ((len (length str))
-         (place-expts (reverse (loop for i from 0 below len collect i)))
-         (digit-values (loop for i from 0 below len collect (base-62-digit-value (elt str i))))
-         (ksuid-int (loop for i from 0 below len
-                          summing (* (elt digit-values i)
-                                     (expt 62 (elt place-expts i))))))
-    (integer->ksuid ksuid-int)))
+  (integer->ksuid (string->ksuid-int str)))
 
 #+nil (defparameter $k1 (make-ksuid))
-#+nil (setf $kstr (ksuid->string $k1))
-#+nil (setf $k2 (string->ksuid $kstr))
-#+nil (equalp $k1 $k2)
+#+nil (defparameter $k2 (make-ksuid))
+#+nil (setf $k1str (ksuid->string $k1))
+#+nil (setf $k2str (ksuid->string $k2))
+#+nil (defparameter $k1.1 (string->ksuid $k1str))
+#+nil (equalp $k1 $k1.1)
+#+nil (defparameter $k2.1 (string->ksuid $k2str))
+#+nil (equalp $k2 $k2.1)
