@@ -15,8 +15,8 @@
   :license  "Apache 2.0"
   :version (:read-file-form "version.lisp")
   :serial t
-  :depends-on (:cl-intbytes :ironclad)
+  :depends-on (:cl-intbytes :local-time :ironclad)
   :components ((:file "package")
-               (:file "ulid")))
+               (:file "ksuid")))
 
-#+nil (ql:quickload :net.bardcode.ulid)
+#+nil (ql:quickload :ksuid)
