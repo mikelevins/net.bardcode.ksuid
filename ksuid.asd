@@ -9,7 +9,7 @@
 ;;;;
 ;;;; ***********************************************************************
 
-(asdf:defsystem "ksuid"
+(asdf:defsystem "net.bardcode.ksuid"
   :description "A simple implementation of KSUID in Common Lisp"
   :author "mikel evins <mikel@evins.net>"
   :license  "Apache 2.0"
@@ -19,4 +19,4 @@
   :components ((:file "package")
                (:file "ksuid")))
 
-#+nil (ql:quickload :ksuid)
+#+nil (ql:quickload :net.bardcode.ksuid)
