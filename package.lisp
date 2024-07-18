@@ -3,4 +3,6 @@
 (defpackage #:net.bardcode.ksuid
   (:use #:cl)
   (:nicknames :ksuid)
-  (:export #:make-ksuid))
+  (:export
+   #:ksuid
+   #:make-ksuid))
