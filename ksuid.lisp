@@ -53,13 +53,14 @@
 #+nil (type-of (get-ksuid-random-bytes))
 
 (deftype ksuid ()
-  '(array t (20)))
+  '(array (unsigned-byte 8) (20)))
 
 (defun make-ksuid ()
-  (concatenate '(ARRAY t (20))
+  (concatenate '(ARRAY (unsigned-byte 8) (20))
                (get-ksuid-timestamp-bytes)
                (get-ksuid-random-bytes)))
 
+#+nil (type-of (make-ksuid))
 #+nil (typep (make-ksuid) 'ksuid)
 
 
