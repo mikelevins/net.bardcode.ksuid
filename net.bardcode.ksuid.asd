@@ -4,6 +4,7 @@
 ;;;; Project:       ksuid
 ;;;; Purpose:       naturally-ordered, collision-free,coordination-free,
 ;;;;                dependency-free unique identifiers
+;;;;                (see https://github.com/segmentio/ksuid)
 ;;;; Author:        mikel evins
 ;;;; Copyright:     2024 by mikel evins
 ;;;;
