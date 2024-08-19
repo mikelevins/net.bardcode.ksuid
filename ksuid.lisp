@@ -16,6 +16,7 @@
 ;;; parameters
 ;;; ---------------------------------------------------------------------
 
+(defvar +ksuid-random-state+ (make-random-state t))
 (defvar +128-set-bits+ #xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
 (defvar +base62-alphabet+ "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 (defparameter +unix-universal-time-epoch+ 2208988800)
@@ -46,8 +47,8 @@
 
 #+nil (get-ksuid-timestamp-bytes)
 
-(defun get-ksuid-random-bytes (&optional (prng ironclad:*prng*))
-  (reverse (cl-intbytes:int->octets (ironclad:strong-random +128-set-bits+ prng)
+(defun get-ksuid-random-bytes ()
+  (reverse (cl-intbytes:int->octets (random +128-set-bits+ +ksuid-random-state+)
                                     16)))
 
 #+nil (type-of (get-ksuid-random-bytes))
