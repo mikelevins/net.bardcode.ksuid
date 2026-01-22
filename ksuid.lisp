@@ -343,7 +343,3 @@ Returns nil if KSUID is already at minimum (nil KSUID)."
                        (setf (aref result i) diff
                              borrow 0))))
         result)))
-
-;;; ---------------------------------------------------------------------
-;;; end of file
-;;; ---------------------------------------------------------------------

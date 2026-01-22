@@ -21,7 +21,7 @@ The text representation is always 27 characters using base62 encoding (alphanume
 
 This implementation has **no external dependencies** for KSUID generation itself. Random bytes are generated using the standard Common Lisp `RANDOM` function with a state initialized from system entropy.
 
-**Note**: The random number generator is NOT cryptographically secure, but is sufficient for generating unique identifiers in most applications. If you need cryptographically secure random bytes, consider using `net.bardcode.ksuid2` which depends on Ironclad.
+**Note**: The random number generator is NOT cryptographically secure, but is sufficient for generating unique identifiers in most applications. 
 
 ## Usage
 

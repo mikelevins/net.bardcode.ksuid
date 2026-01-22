@@ -28,9 +28,6 @@
 ;;; with a random state initialized from system entropy via (make-random-state t).
 ;;; This is NOT cryptographically secure, but is sufficient for generating
 ;;; unique identifiers in most applications.
-;;;
-;;; If you need cryptographically secure random bytes, consider using
-;;; net.bardcode.ksuid2 which depends on Ironclad.
 
 #+repl (asdf:load-system :net.bardcode.ksuid)
 #+repl (net.bardcode.ksuid-test:run-tests)
