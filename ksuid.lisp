@@ -2,8 +2,8 @@
 ;;;;
 ;;;; Name:          ksuid.lisp
 ;;;; Project:       ksuid
-;;;; Purpose:       naturally-ordered, collision-free, coordination-free,
-;;;;                dependency-free unique identifiers.
+;;;; Purpose:       naturally-ordered, collision-free, coordination-free
+;;;;                unique identifiers.
 ;;;;                see https://github.com/segmentio/ksuid [MIT license]
 ;;;; Author:        mikel evins
 ;;;; Copyright:     2024 by mikel evins
@@ -29,17 +29,19 @@
 (defconstant +ksuid-string-length+ 27
   "Character length of the base62-encoded string representation.")
 
-;;; Bit masks
-(defvar +128-set-bits+ #xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-  "128-bit mask for random payload generation.")
-
 ;;; Random state for KSUID generation (initialized from system entropy)
 (defvar *ksuid-random-state* (make-random-state t)
   "Random state used for generating KSUID payloads.
 Initialized from system entropy at load time.")
 
+(defvar *ksuid-random-lock* (bordeaux-threads:make-lock "ksuid-random")
+  "Lock protecting concurrent access to *KSUID-RANDOM-STATE*.
+Some implementations document RANDOM as thread-safe with a shared
+state, but this is not guaranteed across implementations, so we
+lock explicitly.")
+
 ;;; Base62 encoding alphabet (matches reference implementation)
-(defvar +base62-alphabet+ "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+(defparameter +base62-alphabet+ "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   "Base62 alphabet used for string encoding. Lexicographically ordered.")
 
 ;;; Time epoch constants
@@ -57,22 +59,33 @@ Initialized from system entropy at load time.")
 (defparameter +ksuid-unix-epoch-offset+ (- +ksuid-universal-time-epoch+ +unix-universal-time-epoch+)
   "Offset from Unix epoch to KSUID epoch in seconds.")
 
-;;; Nil and Max KSUIDs (matches reference implementation)
-(defvar +ksuid-nil+ (make-array +ksuid-byte-length+
-                                 :element-type '(unsigned-byte 8)
-                                 :initial-element 0)
-  "Represents a completely empty (invalid) KSUID.")
+(defparameter +ksuid-unix-epoch-seconds+ 1400000000
+  "The KSUID epoch (May 13, 2014) expressed as Unix timestamp seconds.
+Useful for cross-language interop where the other side computes
+timestamps from the Unix epoch -- e.g., a JavaScript counterpart
+computing a KSUID timestamp as (Math.floor(Date.now() / 1000) -
+KSUID_UNIX_EPOCH_SECONDS).")
 
-(defvar +ksuid-max+ (make-array +ksuid-byte-length+
-                                 :element-type '(unsigned-byte 8)
-                                 :initial-element 255)
-  "Represents the highest value a KSUID can have.")
+;;; Nil and Max KSUIDs (matches reference implementation)
+;;;
+;;; These arrays are intended to be treated as immutable; callers
+;;; must not mutate them. Use COPY-SEQ if a mutable copy is needed.
+
+(defparameter +ksuid-nil+ (make-array +ksuid-byte-length+
+                                       :element-type '(unsigned-byte 8)
+                                       :initial-element 0)
+  "Represents a completely empty (invalid) KSUID. Treat as immutable.")
+
+(defparameter +ksuid-max+ (make-array +ksuid-byte-length+
+                                       :element-type '(unsigned-byte 8)
+                                       :initial-element 255)
+  "Represents the highest value a KSUID can have. Treat as immutable.")
 
 ;;; String bounds for validation (matches reference implementation)
-(defvar +ksuid-min-string-encoded+ "000000000000000000000000000"
+(defparameter +ksuid-min-string-encoded+ "000000000000000000000000000"
   "Minimum valid base62-encoded KSUID string.")
 
-(defvar +ksuid-max-string-encoded+ "aWgEPTl1tmebfsQzFP4bxwgy80V"
+(defparameter +ksuid-max-string-encoded+ "aWgEPTl1tmebfsQzFP4bxwgy80V"
   "Maximum valid base62-encoded KSUID string.")
 
 ;;; ---------------------------------------------------------------------
@@ -110,11 +123,13 @@ If TIME-SECONDS is nil, uses the current KSUID time."
 (defun get-ksuid-random-bytes ()
   "Returns a 16-byte array of random bytes.
 Uses the standard Common Lisp random number generator with a state
-initialized from system entropy. Note: This is NOT cryptographically
-secure, but is sufficient for generating unique identifiers."
+initialized from system entropy, serialized through *KSUID-RANDOM-LOCK*
+for thread safety. Note: This is NOT cryptographically secure, but is
+sufficient for generating unique identifiers."
   (let ((bytes (make-array +ksuid-payload-length+ :element-type '(unsigned-byte 8))))
-    (dotimes (i +ksuid-payload-length+)
-      (setf (aref bytes i) (random 256 *ksuid-random-state*)))
+    (bordeaux-threads:with-lock-held (*ksuid-random-lock*)
+      (dotimes (i +ksuid-payload-length+)
+        (setf (aref bytes i) (random 256 *ksuid-random-state*))))
     bytes))
 
 (defun base-62-digit-value (ch)

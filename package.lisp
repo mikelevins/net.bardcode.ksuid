@@ -5,10 +5,10 @@
   (:nicknames :ksuid)
   (:export
    ;; constants
-   #:+128-set-bits+
    #:+base62-alphabet+
    #:+ksuid-universal-time-epoch+
    #:+ksuid-unix-epoch-offset+
+   #:+ksuid-unix-epoch-seconds+
    #:+unix-universal-time-epoch+
    #:+ksuid-string-length+
    #:+ksuid-byte-length+
@@ -51,9 +51,6 @@
    #:ksuid-prev
    ))
 
-
-(defpackage :net.bardcode.ksuid-test
-  (:use #:cl #:it.bese.fiveam)
-  (:local-nicknames (#:ksuid #:net.bardcode.ksuid)
-                    (#:fiveam #:it.bese.fiveam))
-  (:export #:run-tests))
+;;; The :net.bardcode.ksuid-test package definition lives in test.lisp,
+;;; which is part of the net.bardcode.ksuid/test system, so that the
+;;; main system does not need fiveam loaded.

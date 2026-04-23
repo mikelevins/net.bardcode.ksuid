@@ -8,6 +8,12 @@
 ;;;;
 ;;;; ***********************************************************************
 
+(defpackage :net.bardcode.ksuid-test
+  (:use #:cl #:it.bese.fiveam)
+  (:local-nicknames (#:ksuid #:net.bardcode.ksuid)
+                    (#:fiveam #:it.bese.fiveam))
+  (:export #:run-tests))
+
 (in-package :net.bardcode.ksuid-test)
 
 ;;; ---------------------------------------------------------------------

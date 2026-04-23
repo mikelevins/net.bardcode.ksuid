@@ -17,9 +17,9 @@ The text representation is always 27 characters using base62 encoding (alphanume
 (ql:quickload :net.bardcode.ksuid)
 ```
 
-**Dependencies**: `fiveam` (for tests only)
+**Dependencies**: `bordeaux-threads` (runtime), `fiveam` (tests only, in the `net.bardcode.ksuid/test` system)
 
-This implementation has **no external dependencies** for KSUID generation itself. Random bytes are generated using the standard Common Lisp `RANDOM` function with a state initialized from system entropy.
+This implementation has only one runtime dependency: `bordeaux-threads`, used to serialize concurrent access to the shared random state. Random bytes are generated using the standard Common Lisp `RANDOM` function with a state initialized from system entropy.
 
 **Note**: The random number generator is NOT cryptographically secure, but is sufficient for generating unique identifiers in most applications. 
 
@@ -152,13 +152,13 @@ This implementation is compatible with the [reference Go implementation](https:/
 |---------|----------------|-----------------|-----------------|
 | Random source | CL random | Ironclad | CL random |
 | Crypto-secure | No | Yes | No |
-| Dependencies | cl-intbytes | ironclad | None* |
+| Dependencies | cl-intbytes | ironclad | bordeaux-threads* |
 | String padding | No | Yes | Yes |
 | Accessors | No | Yes | Yes |
 | Comparison | No | Yes | Yes |
 | Navigation | No | Yes | Yes |
 
-\* fiveam is only required for running tests
+\* `bordeaux-threads` is the sole runtime dependency. `fiveam` is only required for running tests, and lives in the separate `net.bardcode.ksuid/test` system so consumers don't pull it in.
 
 ## License
 
